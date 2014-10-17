@@ -18,6 +18,7 @@ package org.jcoffeescript;
 
 import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.mozilla.javascript.JavaScriptException;
 
 import java.util.Arrays;
 
@@ -25,6 +26,8 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 public class CoffeeScriptCompilerTest {
+    private static String coffeePath = "./coffee-script-1.8.0.js";
+
     @Test
     public void shouldCompileWithDefaultOptions() throws JCoffeeScriptCompileException {
         assertThat(compiling("a = 1"),
@@ -40,11 +43,36 @@ public class CoffeeScriptCompilerTest {
         assertThat(compiling("a = 1", Option.BARE), not(containsFunctionWrapper()));
     }
 
+
+    @Test
+    public void shouldFailOnError()  {
+        try {
+            String result = compiling("\na=10\n\n\nclass class eee");
+//            System.out.println(result);
+            assert(false);
+
+        }catch (JCoffeeScriptCompileException e) {
+//            System.out.println(e.getStackTrace());
+            JavaScriptException jse = (JavaScriptException)e.getCause();
+
+//            System.out.println(jse.sourceName() + " " +  jse.lineNumber() + ":" + jse.columnNumber() + " " + jse.getValue());
+//            jse.printStackTrace();
+//            System.out.println(jse.getValue());
+            assert(jse.getValue().toString().equals("SyntaxError: unexpected class"));
+
+        }
+
+//        assertThat(compiling("a = 1", Option.BARE), not(containsFunctionWrapper()));
+    }
+
     private Matcher<String> containsFunctionWrapper() {
         return allOf(startsWith("(function() {\n"), endsWith("\n}).call(this);\n"));
     }
 
     private String compiling(String coffeeScriptSource, Option... options) throws JCoffeeScriptCompileException {
-        return new JCoffeeScriptCompiler(Arrays.asList(options)).compile(coffeeScriptSource);
+//        return new JCoffeeScriptCompiler(coffeeScriptSource, Arrays.asList(options)).compile(coffeeScriptSource);
+        String result = new JCoffeeScriptCompiler(coffeePath, Arrays.asList(options)).compile(coffeeScriptSource);
+//        System.out.println(result);
+        return result;
     }
 }

@@ -16,10 +16,15 @@
 
 package org.jcoffeescript;
 
+import org.mozilla.javascript.JavaScriptException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -27,16 +32,27 @@ public class Main {
     private static final int BUFFER_SIZE = 262144;
     private static final int BUFFER_OFFSET = 0;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         new Main().execute(args, System.out, System.in);
     }
 
-    public void execute(String[] args, PrintStream out, InputStream in) {
+    public void execute(String[] args, PrintStream out, InputStream in) throws IOException {
         final Collection<Option> options = readOptionsFrom(args);
+        if(args.length  < 2) {
+            System.out.println("arguments: coffee-script-1.8.0.js file.coffee");
+            System.exit(1);
+        }
+        String coffeeLibPath = args[0];
+        String coffeeFilePath = args[1];
+        byte[] bytes = Files.readAllBytes(Paths.get(coffeeFilePath));
+        String source= new String(bytes, "UTF-8");
+
+
         try {
-            out.print(new JCoffeeScriptCompiler(options).compile(readSourceFrom(in)));
+            out.print(new JCoffeeScriptCompiler(coffeeLibPath, readOptionsFrom(args)).compile(source));
         } catch (JCoffeeScriptCompileException e) {
-            System.err.println(e.getMessage());
+            JavaScriptException jse = (JavaScriptException)e.getCause();
+            System.out.println(Paths.get(args[1]).toAbsolutePath().toString() + " " + jse.getValue());
         }
     }
 
@@ -63,7 +79,7 @@ public class Main {
     private Collection<Option> readOptionsFrom(String[] args) {
         final Collection<Option> options = new LinkedList<Option>();
 
-        if (args.length == 1 && args[0].equals("--bare")) {
+        if (args.length == 3 && args[2].equals("--bare")) {
             options.add(Option.BARE);
         }
         return options;

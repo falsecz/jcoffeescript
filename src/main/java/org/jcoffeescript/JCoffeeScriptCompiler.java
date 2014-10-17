@@ -20,11 +20,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -33,14 +30,14 @@ public class JCoffeeScriptCompiler {
     private final Scriptable globalScope;
     private final Options options;
 
-	 public JCoffeeScriptCompiler() {
-        this(Collections.<Option>emptyList());
+	 public JCoffeeScriptCompiler(String coffeeScriptPath) {
+        this(coffeeScriptPath, Collections.<Option>emptyList());
     }
 
-	public JCoffeeScriptCompiler(Collection<Option> options) {
+	public JCoffeeScriptCompiler(String coffeeScriptPath, Collection<Option> options) {
         ClassLoader classLoader = getClass().getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("org/jcoffeescript/coffee-script.js");
         try {
+            InputStream inputStream = new FileInputStream(coffeeScriptPath);
             try {
                 Reader reader = new InputStreamReader(inputStream, "UTF-8");
                 try {
